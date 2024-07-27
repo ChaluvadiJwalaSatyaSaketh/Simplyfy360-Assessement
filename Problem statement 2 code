@@ -1,0 +1,71 @@
+from collections import defaultdict, deque
+
+class SocialNetwork:
+    def __init__(self):
+        self.friends = defaultdict(set)
+    
+    def add_friendship(self, person1, person2):
+        self.friends[person1].add(person2)
+        self.friends[person2].add(person1)
+    
+    def get_friends(self, person):
+        return self.friends[person]
+    
+    def find_common_friends(self, person1, person2):
+        return self.friends[person1].intersection(self.friends[person2])
+    
+    def find_nth_connection(self, start, target):
+        if start == target:
+            return 0
+        
+        queue = deque([(start, 0)])
+        visited = {start}
+        
+        while queue:
+            current, level = queue.popleft()
+            
+            for friend in self.friends[current]:
+                if friend == target:
+                    return level + 1
+                if friend not in visited:
+                    visited.add(friend)
+                    queue.append((friend, level + 1))
+        
+        return -1
+
+def main():
+    network = SocialNetwork()
+    
+    # Input people to get their friends and find common friends
+    p1 = input("Enter first person: ")
+    p2 = input("Enter second person: ")
+    
+    # Input friendships
+    num_friendships = int(input("Enter the number of friendships: "))
+    
+    for _ in range(num_friendships):
+        person1 = input("Enter the first person: ")
+        person2 = input("Enter the second person: ")
+        network.add_friendship(person1, person2)
+    
+    p1_friends = network.get_friends(p1)
+    p2_friends = network.get_friends(p2)
+    print(f"{p1}'s friends: {p1_friends}")
+    print(f"{p2}'s friends: {p2_friends}")
+    
+    # Find common friends between two people
+    common_friends = network.find_common_friends(p1, p2)
+    print(f"Common friends of {p1} and {p2}: {common_friends}")
+    
+    # Find nth connection between two people
+    start_person = input("Enter the starting person to find nth connection: ")
+    target_person = input("Enter the target person to find nth connection: ")
+    nth_connection = network.find_nth_connection(start_person, target_person)
+    print(f"Connection level between {start_person} and {target_person}: {nth_connection}")
+
+if __name__ == "__main__":
+    main()
+
+
+# The time complexity of the given code is 𝑂(𝐹+𝐸), where F is the number of friendships and E is the total number of connections (edges) in the social network.
+# The space complexity is O(F+E)
