@@ -1,0 +1,107 @@
+from collections import defaultdict, deque
+
+class Task:
+    def __init__(self, name, duration):
+        self.name = name
+        self.duration = duration
+        self.earliest_start = 0
+        self.latest_start = 0
+        self.earliest_finish = 0
+        self.latest_finish = 0
+        self.dependencies = set()
+        self.dependents = set()
+
+def compute_earliest_finish_times(tasks):
+    graph = defaultdict(list)
+    indegree = defaultdict(int)
+    
+    for task in tasks:
+        for dep in task.dependencies:
+            graph[dep].append(task.name)
+            indegree[task.name] += 1
+    
+    queue = deque()
+    for task in tasks:
+        if indegree[task.name] == 0:
+            task.earliest_finish = task.duration
+            queue.append(task)
+    
+    while queue:
+        current_task = queue.popleft()
+        
+        for dependent in graph[current_task.name]:
+            dependent_task = next(t for t in tasks if t.name == dependent)
+            dependent_task.earliest_start = max(dependent_task.earliest_start, current_task.earliest_finish)
+            dependent_task.earliest_finish = dependent_task.earliest_start + dependent_task.duration
+            
+            indegree[dependent] -= 1
+            if indegree[dependent] == 0:
+                queue.append(dependent_task)
+
+def compute_latest_finish_times(tasks):
+    graph = defaultdict(list)
+    indegree = defaultdict(int)
+    
+    for task in tasks:
+        for dep in task.dependencies:
+            graph[dep].append(task.name)
+            indegree[task.name] += 1
+    
+    queue = deque()
+    for task in tasks:
+        if not graph[task.name]:
+            task.latest_finish = task.earliest_finish
+            task.latest_start = task.latest_finish - task.duration
+            queue.append(task)
+    
+    while queue:
+        current_task = queue.popleft()
+        
+        for predecessor in tasks:
+            if current_task.name in predecessor.dependencies:
+                predecessor.latest_finish = min(predecessor.latest_finish, current_task.latest_start)
+                predecessor.latest_start = predecessor.latest_finish - predecessor.duration
+                
+                indegree[predecessor.name] -= 1
+                if indegree[predecessor.name] == 0:
+                    queue.append(predecessor)
+
+def main():
+    tasks = []
+    num_tasks = int(input("Enter the number of tasks: "))
+    for _ in range(num_tasks):
+        name = input("Enter task name: ")
+        duration = int(input("Enter task duration: "))
+        tasks.append(Task(name, duration))
+    
+    dependencies = []
+    num_dependencies = int(input("Enter the number of dependencies: "))
+    for _ in range(num_dependencies):
+        task_name = input("Enter task name: ")
+        dep_name = input("Enter dependent task name: ")
+        task = next(t for t in tasks if t.name == task_name)
+        dep_task = next(t for t in tasks if t.name == dep_name)
+        task.dependents.add(dep_task.name)
+        dep_task.dependencies.add(task.name)
+        dependencies.append((task_name, dep_name))
+    
+    compute_earliest_finish_times(tasks)
+    compute_latest_finish_times(tasks)
+    
+    earliest_finish_time = max(t.earliest_finish for t in tasks)
+    latest_finish_time = max(t.latest_finish for t in tasks)
+    
+    print(f"Earliest time all tasks will be completed: {earliest_finish_time}")
+    print(f"Latest time all tasks will be completed: {latest_finish_time}")
+
+if __name__ == "__main__":
+    main()
+
+
+
+# Time Complexity: 
+# 𝑂(𝑛+𝑚)
+# O(n+m), where n is the number of tasks and m is the number of dependencies.
+# Space Complexity: 
+# 𝑂(𝑛+𝑚)
+# O(n+m), primarily for storing the graph and task data
